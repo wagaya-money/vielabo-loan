@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>住宅ローンシミュレーター｜Vie Labo</title>
+<style>
+  :root {
+    --surface-1:   #fcfcfb;
+    --page-plane:  #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-blue:    #2a78d6;
+    --series-aqua:    #1baf7a;
+    --series-violet:  #4a3aa7;
+    --good:      #0ca30c;
+    --warning:   #fab219;
+    --serious:   #ec835a;
+    --critical:  #d03b3b;
+    --track-bg:  #e1e0d9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-1:   #1a1a19;
+      --page-plane:  #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-blue:    #3987e5;
+      --series-aqua:    #199e70;
+      --series-violet:  #9085e9;
+      --good:      #0ca30c;
+      --warning:   #fab219;
+      --serious:   #ec835a;
+      --critical:  #d03b3b;
+      --track-bg:  #383835;
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface-1:   #1a1a19;
+    --page-plane:  #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-blue:    #3987e5;
+    --series-aqua:    #199e70;
+    --series-violet:  #9085e9;
+    --track-bg:  #383835;
+  }
+  :root[data-theme="light"] {
+    --surface-1:   #fcfcfb;
+    --page-plane:  #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-blue:    #2a78d6;
+    --series-aqua:    #1baf7a;
+    --series-violet:  #4a3aa7;
+    --track-bg:  #e1e0d9;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0;
+    font-weight: 700;
+  }
+  .today {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 15px;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--gridline);
+    color: var(--text-secondary);
+  }
+  .callout {
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    border: 1px solid var(--border);
+  }
+  .callout.warn {
+    background: color-mix(in srgb, var(--warning) 14%, var(--surface-1));
+    border-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+  }
+  .callout strong { display:block; margin-bottom: 4px; font-size: 14px; }
+
+  /* stat tiles */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .tiles:last-child { margin-bottom: 0; }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .tile .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .tile .value { font-size: 20px; font-weight: 700; }
+  .tile .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .tile-big { text-align: center; }
+  .tile-big .value { font-size: 28px; }
+  .tile .value.positive { color: var(--good); }
+  .tile .value.negative { color: var(--critical); }
+
+  .group-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 8px;
+  }
+
+  label.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    max-width: 320px;
+  }
+  input[type="number"], input[type="text"], select {
+    font: inherit;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: -8px; margin-bottom: 14px; }
+  .hint:last-child { margin-bottom: 0; }
+  .hint.warn-text { color: var(--critical); font-weight: 600; }
+
+  .field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+  }
+  .field-checkbox input[type="checkbox"] { width: 16px; height: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gridline);
+    white-space: nowrap;
+  }
+  th { color: var(--text-secondary); font-weight: 600; font-size: 12px; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 24px;
+  }
+
+  /* tabs */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--gridline);
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--series-blue); }
+  .tab-panel.hidden { display: none; }
+
+  .compare-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .compare-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    background: var(--page-plane);
+  }
+  .compare-card h3 {
+    font-size: 13px;
+    margin: 0 0 10px;
+    color: var(--text-secondary);
+  }
+  .breakdown-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--gridline);
+  }
+  .breakdown-line:last-child { border-bottom: none; }
+  .breakdown-line .num { font-variant-numeric: tabular-nums; }
+  .breakdown-line.total { font-weight: 700; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--baseline); }
+
+  .formula {
+    font-size: 13px;
+    background: var(--page-plane);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>住宅ローンシミュレーター <span style="font-size:0.6em;font-weight:600;color:var(--text-muted)">by Vie Labo</span></h1>
+    <div class="today" id="todayLabel"></div>
+  </header>
+
+  <div class="hint" style="margin-bottom:16px">
+    住宅ローンの「変動 vs 固定の比較」「毎月返済額を決めるFP係数の見える化」「繰り上げ返済の効果」を、
+    共通の借入条件から一度に試算します。数値はすべて入力した仮定に基づく概算です。
+  </div>
+
+  <div class="card">
+    <h2>共通の入力</h2>
+    <label class="field">
+      借入額（円）
+      <input type="number" id="loanAmount" min="0" step="100000" placeholder="例：30000000">
+    </label>
+    <label class="field">
+      返済年数（年）
+      <input type="number" id="years" min="1" step="1" placeholder="例：35">
+    </label>
+    <label class="field">
+      変動金利（年%）
+      <input type="number" id="variableRate" min="0" step="0.01" placeholder="例：0.5">
+    </label>
+    <label class="field">
+      固定金利（年%）
+      <input type="number" id="fixedRate" min="0" step="0.01" placeholder="例：1.8">
+    </label>
+    <div class="hint" style="margin-top:-8px">
+      返済方式は「元利均等返済」（毎月の返済額が一定になる方式）を前提に計算しています。
+    </div>
+  </div>
+
+  <nav class="tab-bar" role="tablist" aria-label="表示する分野">
+    <button type="button" class="tab-btn" data-tab="hikaku" role="tab">変動 vs 固定の比較</button>
+    <button type="button" class="tab-btn" data-tab="keisu" role="tab">FP係数の見える化</button>
+    <button type="button" class="tab-btn" data-tab="kurikoshi" role="tab">繰り上げ返済の効果</button>
+  </nav>
+
+  <section class="tab-panel" data-tab="hikaku" id="tabpanel-hikaku">
+    <div class="card">
+      <h2>固定金利 vs 変動金利（金利上昇シナリオ）</h2>
+      <label class="field">
+        変動金利の金利上昇シナリオ
+        <select id="scenario">
+          <option value="flat">据え置き（上がらない）</option>
+          <option value="mild">緩やかに上昇（5年ごとに+0.25%、ただし上限まで）</option>
+          <option value="steep">急速に上昇（5年ごとに+0.5%、ただし上限まで）</option>
+          <option value="recent">直近ペースで上昇（2年ごとに+0.5%、ただし上限まで）</option>
+        </select>
+      </label>
+      <label class="field">
+        変動金利の上限（天井）（年%）
+        <input type="number" id="variableRateCap" min="0" step="0.01" placeholder="例：3.0">
+      </label>
+      <div class="hint" style="margin-top:-8px">
+        変動金利が上昇しても、この上限に達したらそれ以上は上がらないものとして計算します。
+      </div>
+      <div class="hint" style="margin-top:0">
+        金利がどこまで上がるか（中立金利の水準）は誰にも予測できません。上限（天井）を2%・3%・4%などに変えて、それぞれで返済額がいくらまで増えるかを見て、「最悪でもその返済額で家計が耐えられるか」を確認する使い方がおすすめです。「直近ペース」は現在の日銀の利上げペースを反映した仮定で、実際にこのペースが長く続くとは限りません。
+      </div>
+
+      <label class="field-checkbox">
+        <input type="checkbox" id="includeHybrid">
+        固定期間選択型（◯年固定→変動）を比較に含める
+      </label>
+      <div id="hybridInputs" style="display:none;">
+        <label class="field">
+          固定する期間（年）
+          <input type="number" id="hybridFixedYears" min="1" step="1" placeholder="例：10">
+        </label>
+        <label class="field">
+          その固定期間中の金利（年%）
+          <input type="number" id="hybridFixedRate" min="0" step="0.01" placeholder="例：1.5">
+        </label>
+        <div class="hint" style="margin-top:-8px">
+          固定期間選択型は、最初の◯年だけ金利が固定され、その後は変動に移行するため、金利上昇リスクを固定期間の後に先送りする形になります。固定期間終了後の金利はその時点の水準次第で、ここでは選択中の上昇シナリオに沿った仮定（上限まで頭打ち）で計算しています。実際の移行後金利は誰にも予測できません。
+        </div>
+        <div class="hint" style="margin-top:0">
+          固定期間終了後の変動金利は、選択中の「金利上昇シナリオ」と「変動金利の上限（天井）」の設定によって変わります。上のシナリオや上限を変えると、この移行後の金利も変わります。ここでは、その設定に基づいて到達した金利で計算しています。実際の移行後の金利は誰にも予測できません。
+        </div>
+      </div>
+
+      <div class="compare-row">
+        <div class="compare-card">
+          <h3>固定金利（全期間固定）</h3>
+          <div class="breakdown-line"><span>毎月返済額</span><span class="num" id="out_fixedPayment">—</span></div>
+          <div class="breakdown-line"><span>利息総額</span><span class="num" id="out_fixedInterest">—</span></div>
+          <div class="breakdown-line total"><span>総返済額</span><span class="num" id="out_fixedTotalPayment">—</span></div>
+        </div>
+        <div class="compare-card">
+          <h3>変動金利（<span id="out_scenarioName">—</span>）</h3>
+          <div class="breakdown-line"><span>毎月返済額（当初）</span><span class="num" id="out_varPayment">—</span></div>
+          <div class="breakdown-line"><span>毎月返済額（最終見直し後）</span><span class="num" id="out_varLastPayment">—</span></div>
+          <div class="breakdown-line"><span>利息総額</span><span class="num" id="out_varInterest">—</span></div>
+          <div class="breakdown-line total"><span>総返済額</span><span class="num" id="out_varTotalPayment">—</span></div>
+          <div class="breakdown-line" id="varFlatRefRow" style="display:none;"><span>参考：当初金利のまま据え置きだった場合</span><span class="num" id="out_varFlatRef">—</span></div>
+        </div>
+        <div class="compare-card" id="hybridCard" style="display:none;">
+          <h3>固定期間選択型（<span id="out_hybridYears">—</span>年固定→変動）</h3>
+          <div class="breakdown-line"><span>固定終了後の変動金利</span><span class="num" id="out_hybridTransitionRate">—</span></div>
+          <div class="breakdown-line"><span>毎月返済額（当初・固定中）</span><span class="num" id="out_hybridPaymentInitial">—</span></div>
+          <div class="breakdown-line"><span>毎月返済額（固定終了直後・変動移行時）</span><span class="num" id="out_hybridPaymentTransition">—</span></div>
+          <div class="breakdown-line"><span>毎月返済額（最終見直し後）</span><span class="num" id="out_hybridPaymentFinal">—</span></div>
+          <div class="breakdown-line"><span>利息総額</span><span class="num" id="out_hybridInterest">—</span></div>
+          <div class="breakdown-line total"><span>総返済額</span><span class="num" id="out_hybridTotalPayment">—</span></div>
+        </div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile tile-big">
+          <div class="label">総返済額の差（変動 − 固定）</div>
+          <div class="value" id="out_diff">—</div>
+          <div class="sub" id="out_diffNote">—</div>
+        </div>
+      </div>
+
+      <div class="group-label" id="varScheduleLabel">変動金利の金利見直しスケジュール（5年ごと・簡易モデル）</div>
+      <div class="table-scroll" style="margin-bottom:14px">
+        <table>
+          <thead>
+            <tr><th>期間</th><th>その時点の金利</th><th>見直し後の毎月返済額</th></tr>
+          </thead>
+          <tbody id="varScheduleBody"></tbody>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:0">
+        変動金利は日銀の政策金利（短期金利）に、固定金利は長期金利（10年国債利回りなど）に連動する傾向があります。
+        変動金利は現在は低い水準にあることが多いですが、将来の金利上昇リスクを借り手自身が負う仕組みです。固定金利はその分、当初の金利がやや高めに設定される「安心料」と考えられます。
+      </div>
+      <div class="hint">
+        実際の変動金利型ローンには「5年ルール」（返済額の見直しは5年ごと）や「125%ルール」（見直し後の返済額は従前の125%まで）、団体信用生命保険料などがありますが、ここではそれらを簡略化し、選択したシナリオの間隔（5年ごと、「直近ペース」のみ2年ごと）で残高・残り期間から返済額を再計算するだけの簡易モデルで試算しています。
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel hidden" data-tab="keisu" id="tabpanel-keisu">
+    <div class="card">
+      <h2>資本回収係数（毎月返済額のもとになる係数）</h2>
+      <div class="formula">
+        資本回収係数 ＝ [ i × (1+i)<sup>n</sup> ] ÷ [ (1+i)<sup>n</sup> − 1 ]　（i：月利、n：返済回数）<br>
+        毎月返済額 ＝ 借入額 × 資本回収係数
+      </div>
+      <div class="compare-row">
+        <div class="compare-card">
+          <h3>固定金利（<span id="out_crfFixedRate">—</span>）</h3>
+          <div class="breakdown-line"><span>月利 i</span><span class="num" id="out_crfFixed_i">—</span></div>
+          <div class="breakdown-line"><span>返済回数 n</span><span class="num" id="out_crfFixed_n">—</span></div>
+          <div class="breakdown-line"><span>資本回収係数</span><span class="num" id="out_crfFixed_value">—</span></div>
+          <div class="breakdown-line total"><span>毎月返済額</span><span class="num" id="out_crfFixed_payment">—</span></div>
+        </div>
+        <div class="compare-card">
+          <h3>変動金利（当初・<span id="out_crfVarRate">—</span>）</h3>
+          <div class="breakdown-line"><span>月利 i</span><span class="num" id="out_crfVar_i">—</span></div>
+          <div class="breakdown-line"><span>返済回数 n</span><span class="num" id="out_crfVar_n">—</span></div>
+          <div class="breakdown-line"><span>資本回収係数</span><span class="num" id="out_crfVar_value">—</span></div>
+          <div class="breakdown-line total"><span>毎月返済額</span><span class="num" id="out_crfVar_payment">—</span></div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:0">
+        上の値は「共通の入力」の金利・年数をそのまま使って計算しています（タブ1の「据え置き」相当の前提です）。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>年金現価係数で借入可能額を逆算</h2>
+      <div class="formula">
+        年金現価係数 ＝ [ (1+i)<sup>n</sup> − 1 ] ÷ [ i × (1+i)<sup>n</sup> ]（資本回収係数の逆数）<br>
+        借入可能額 ＝ 毎月返済額 × 年金現価係数
+      </div>
+      <label class="field">
+        毎月◯円まで返せる（円）
+        <input type="number" id="borrowMonthlyPayment" min="0" step="1000" placeholder="例：100000">
+      </label>
+      <label class="field">
+        金利（年%）
+        <input type="number" id="borrowRate" min="0" step="0.01" placeholder="例：0.5">
+      </label>
+      <label class="field">
+        返済年数（年）
+        <input type="number" id="borrowYears" min="1" step="1" placeholder="例：35">
+      </label>
+      <div class="tiles">
+        <div class="tile">
+          <div class="label">年金現価係数</div>
+          <div class="value" id="out_pvifa_value">—</div>
+        </div>
+        <div class="tile tile-big">
+          <div class="label">借入可能額の目安</div>
+          <div class="value" id="out_borrowable">—</div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:0">
+        FPの6係数のうち、資本回収係数（返済額を求める）と年金現価係数（借入可能額・必要原資を求める）は互いに逆数の関係です。
+        このほかに、終価係数・現価係数・年金終価係数・減債基金係数があり、それぞれ「今の額が将来いくらになるか」「将来の額を得るには今いくら必要か」「毎年いくら積み立てれば目標額に届くか」などを求める際に使われます。
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel hidden" data-tab="kurikoshi" id="tabpanel-kurikoshi">
+    <div class="card">
+      <h2>繰り上げ返済（期間短縮型）の効果</h2>
+      <div class="hint" style="margin-top:0">
+        「期間短縮型」（毎月の返済額は変えず、完済までの期間を短くするタイプ）を前提に計算します。
+      </div>
+      <label class="field">
+        対象のローン
+        <select id="prepayLoanType">
+          <option value="fixed">固定金利</option>
+          <option value="variable">変動金利（据え置き想定）</option>
+          <option value="variable_scenario">変動金利（上昇シナリオ）</option>
+        </select>
+      </label>
+      <div class="hint" style="margin-top:-8px" id="prepayScenarioHint">
+        「変動金利（上昇シナリオ）」を選ぶと、「変動 vs 固定の比較」タブで選択中の金利上昇シナリオ・上限（天井）をそのまま適用して計算します。
+      </div>
+      <label class="field">
+        繰り上げ返済を行う時期（◯年後）
+        <input type="number" id="prepayYears" min="0" step="1" placeholder="例：10">
+      </label>
+      <label class="field">
+        繰り上げ返済額（円）
+        <input type="number" id="prepayAmount" min="0" step="10000" placeholder="例：1000000">
+      </label>
+
+      <div class="compare-row">
+        <div class="compare-card">
+          <h3>繰り上げ返済なし</h3>
+          <div class="breakdown-line"><span>利息総額</span><span class="num" id="out_noPrepay_interest">—</span></div>
+          <div class="breakdown-line"><span>総返済額</span><span class="num" id="out_noPrepay_totalPayment">—</span></div>
+          <div class="breakdown-line total"><span>完済までの期間</span><span class="num" id="out_noPrepay_period">—</span></div>
+        </div>
+        <div class="compare-card">
+          <h3>繰り上げ返済あり</h3>
+          <div class="breakdown-line"><span>利息総額</span><span class="num" id="out_prepay_interest">—</span></div>
+          <div class="breakdown-line"><span>総返済額（繰上額込み）</span><span class="num" id="out_prepay_totalPayment">—</span></div>
+          <div class="breakdown-line total"><span>完済までの期間</span><span class="num" id="out_prepay_period">—</span></div>
+        </div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile tile-big">
+          <div class="label">利息削減額</div>
+          <div class="value positive" id="out_interestSaved">—</div>
+        </div>
+        <div class="tile">
+          <div class="label">完済までの期間短縮</div>
+          <div class="value" id="out_monthsShortened">—</div>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:0">
+        繰り上げ返済は、実行する時期が早いほど利息の削減効果が大きくなります（元金が多く残っている段階ほど、そこにかかるはずだった利息を丸ごと圧縮できるため）。
+      </div>
+      <div class="hint">
+        一方で、繰り上げ返済に使う資金は手元資金の流動性を減らします。繰り上げ返済の金利以上の利回りで運用できる見込みがある場合は、繰り上げ返済より運用を優先する考え方もあります。ご自身の資金計画に合わせて判断してください。
+      </div>
+      <div class="hint">
+        金利が上がっていく局面では、繰り上げ返済で残高を減らしておくことで、その後の金利上昇による利息の増加を抑える効果もあります（残高が小さいほど、金利が上がっても利息の増え方が小さくなるため）。金利上昇前の早い時期の繰り上げほど、この効果は大きくなります。
+      </div>
+    </div>
+  </section>
+
+  <div class="card">
+    <h2>サマリー：選択中の条件での総返済額</h2>
+    <div class="compare-row">
+      <div class="compare-card">
+        <h3>固定 vs 変動（<span id="sum_scenarioName">—</span>）</h3>
+        <div class="breakdown-line"><span>固定金利の総返済額</span><span class="num" id="sum_fixedTotal">—</span></div>
+        <div class="breakdown-line"><span>変動金利の総返済額</span><span class="num" id="sum_varTotal">—</span></div>
+        <div class="breakdown-line total"><span>差額（変動 − 固定）</span><span class="num" id="sum_diff">—</span></div>
+      </div>
+      <div class="compare-card">
+        <h3>繰り上げ返済を考慮した最終結果（<span id="sum_prepayLoanTypeName">—</span>）</h3>
+        <div class="breakdown-line"><span>繰り上げ返済なしの総返済額</span><span class="num" id="sum_noPrepayTotal">—</span></div>
+        <div class="breakdown-line"><span>繰り上げ返済ありの総返済額</span><span class="num" id="sum_prepayTotal">—</span></div>
+        <div class="breakdown-line total"><span>繰り上げ返済による利息削減額</span><span class="num" id="sum_interestSaved">—</span></div>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:0">
+      左は「変動 vs 固定の比較」タブ、右は「繰り上げ返済の効果」タブの計算結果をそのまま統合表示しています。タブの入力を変更すると、ここも自動的に更新されます。
+    </div>
+  </div>
+
+  <div class="callout" style="margin-bottom:0">
+    <strong>ご利用にあたっての注意</strong>
+    ・本ツールは入力した仮定に基づく概算のシミュレーションであり、実際の返済額・金利を保証するものではありません。<br>
+    ・変動金利の将来の動きは誰にも予測できません。「緩やかに上昇」「急上昇」などのシナリオはあくまで仮定です。<br>
+    ・5年ルール・125%ルール、団体信用生命保険料、事務手数料・保証料などの諸費用は簡略化・省略しています。<br>
+    ・実際の借入・借り換えの判断は、金融機関やファイナンシャルプランナーにご相談ください。<br>
+    ・入力したデータはこのブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。
+  </div>
+
+  <footer>
+    このページは Vie Labo が提供する住宅ローンの概算シミュレーションツールです。<br>
+    入力データはこの端末のブラウザ内（localStorage）にのみ保存されます。
+  </footer>
+</div>
+
+<script>
+(function() {
+  const todayEl = document.getElementById('todayLabel');
+  const now = new Date();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  todayEl.textContent = `${now.getFullYear()}年${monthNames[now.getMonth()]}${now.getDate()}日時点`;
+
+  function yen(n) {
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    return sign + Math.round(Math.abs(n)).toLocaleString('ja-JP') + '円';
+  }
+  function signedYen(n) {
+    if (!isFinite(n)) return '—';
+    return (n >= 0 ? '+' : '−') + Math.round(Math.abs(n)).toLocaleString('ja-JP') + '円';
+  }
+  function pct(n, digits) {
+    if (!isFinite(n)) return '—';
+    return n.toFixed(digits === undefined ? 2 : digits) + '%';
+  }
+  function num6(n) {
+    if (!isFinite(n)) return '—';
+    return n.toFixed(6);
+  }
+  function monthsToYM(months) {
+    if (!isFinite(months)) return '—';
+    const m = Math.max(Math.round(months), 0);
+    const y = Math.floor(m / 12);
+    const rem = m % 12;
+    return rem === 0 ? `${y}年` : `${y}年${rem}ヶ月`;
+  }
+
+  const STATE_KEY = 'vielabo_loan_pub_state';
+  const TAB_KEY = 'vielabo_loan_pub_activeTab';
+  const DEFAULT_STATE = {
+    loanAmount: 30000000,
+    years: 35,
+    variableRate: 0.5,
+    fixedRate: 1.8,
+    scenario: 'mild',
+    variableRateCap: 3.0,
+    includeHybrid: false,
+    hybridFixedYears: 10,
+    hybridFixedRate: 1.5,
+    borrowMonthlyPayment: 100000,
+    borrowRate: 0.5,
+    borrowYears: 35,
+    prepayLoanType: 'fixed',
+    prepayYears: 10,
+    prepayAmount: 1000000
+  };
+
+  function loadState() {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return Object.assign({}, DEFAULT_STATE);
+    try {
+      const parsed = JSON.parse(raw);
+      return Object.assign({}, DEFAULT_STATE, parsed);
+    } catch (e) {
+      return Object.assign({}, DEFAULT_STATE);
+    }
+  }
+  function saveState() {
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  }
+
+  let state = loadState();
+
+  const SCENARIOS = {
+    flat:   { label: '据え置き（上がらない）', increment: 0, intervalYears: 5 },
+    mild:   { label: '緩やかに上昇（5年ごとに+0.25%、ただし上限まで）', increment: 0.25, intervalYears: 5 },
+    steep:  { label: '急速に上昇（5年ごとに+0.5%、ただし上限まで）', increment: 0.5, intervalYears: 5 },
+    recent: { label: '直近ペースで上昇（2年ごとに+0.5%、ただし上限まで）', increment: 0.5, intervalYears: 2 }
+  };
+  const PREPAY_LOAN_LABEL = { fixed: '固定金利', variable: '変動金利（据え置き想定）', variable_scenario: '変動金利（上昇シナリオ）' };
+
+  const el = {
+    loanAmount: document.getElementById('loanAmount'),
+    years: document.getElementById('years'),
+    variableRate: document.getElementById('variableRate'),
+    fixedRate: document.getElementById('fixedRate'),
+    scenario: document.getElementById('scenario'),
+    variableRateCap: document.getElementById('variableRateCap'),
+    includeHybrid: document.getElementById('includeHybrid'),
+    hybridFixedYears: document.getElementById('hybridFixedYears'),
+    hybridFixedRate: document.getElementById('hybridFixedRate'),
+    borrowMonthlyPayment: document.getElementById('borrowMonthlyPayment'),
+    borrowRate: document.getElementById('borrowRate'),
+    borrowYears: document.getElementById('borrowYears'),
+    prepayLoanType: document.getElementById('prepayLoanType'),
+    prepayYears: document.getElementById('prepayYears'),
+    prepayAmount: document.getElementById('prepayAmount')
+  };
+
+  function loadInputsFromState() {
+    el.loanAmount.value = state.loanAmount;
+    el.years.value = state.years;
+    el.variableRate.value = state.variableRate;
+    el.fixedRate.value = state.fixedRate;
+    el.scenario.value = SCENARIOS[state.scenario] ? state.scenario : DEFAULT_STATE.scenario;
+    el.variableRateCap.value = state.variableRateCap;
+    el.includeHybrid.checked = state.includeHybrid;
+    el.hybridFixedYears.value = state.hybridFixedYears;
+    el.hybridFixedRate.value = state.hybridFixedRate;
+    el.borrowMonthlyPayment.value = state.borrowMonthlyPayment;
+    el.borrowRate.value = state.borrowRate;
+    el.borrowYears.value = state.borrowYears;
+    el.prepayLoanType.value = PREPAY_LOAN_LABEL[state.prepayLoanType] ? state.prepayLoanType : DEFAULT_STATE.prepayLoanType;
+    el.prepayYears.value = state.prepayYears;
+    el.prepayAmount.value = state.prepayAmount;
+  }
+
+  function readInputsIntoState() {
+    state.loanAmount = Math.max(parseFloat(el.loanAmount.value) || 0, 0);
+    state.years = Math.max(Math.round(parseFloat(el.years.value) || 0), 1);
+    state.variableRate = Math.max(parseFloat(el.variableRate.value) || 0, 0);
+    state.fixedRate = Math.max(parseFloat(el.fixedRate.value) || 0, 0);
+    state.scenario = SCENARIOS[el.scenario.value] ? el.scenario.value : DEFAULT_STATE.scenario;
+    state.variableRateCap = Math.max(parseFloat(el.variableRateCap.value) || 0, 0);
+    state.includeHybrid = el.includeHybrid.checked;
+    state.hybridFixedYears = Math.max(Math.round(parseFloat(el.hybridFixedYears.value) || 0), 1);
+    state.hybridFixedRate = Math.max(parseFloat(el.hybridFixedRate.value) || 0, 0);
+    state.borrowMonthlyPayment = Math.max(parseFloat(el.borrowMonthlyPayment.value) || 0, 0);
+    state.borrowRate = Math.max(parseFloat(el.borrowRate.value) || 0, 0);
+    state.borrowYears = Math.max(Math.round(parseFloat(el.borrowYears.value) || 0), 1);
+    state.prepayLoanType = PREPAY_LOAN_LABEL[el.prepayLoanType.value] ? el.prepayLoanType.value : DEFAULT_STATE.prepayLoanType;
+    state.prepayYears = Math.max(Math.round(parseFloat(el.prepayYears.value) || 0), 0);
+    state.prepayAmount = Math.max(parseFloat(el.prepayAmount.value) || 0, 0);
+  }
+
+  // ---- 資本回収係数・年金現価係数 ----
+  function crf(i, n) {
+    if (n <= 0) return 0;
+    if (Math.abs(i) < 1e-9) return 1 / n;
+    const f = Math.pow(1 + i, n);
+    return i * f / (f - 1);
+  }
+  function pvifa(i, n) {
+    if (n <= 0) return 0;
+    if (Math.abs(i) < 1e-9) return n;
+    const f = Math.pow(1 + i, n);
+    return (f - 1) / (i * f);
+  }
+  function paymentFormula(principal, i, n) {
+    return principal * crf(i, n);
+  }
+
+  // ---- 【手順3】区間内を1回ずつ積み上げ：期首残高×月利=その月の利息、返済額-利息=元金、残高-元金=期末残高 ----
+  // prepayAfterMonths・prepayAmount は繰り上げ返済用のオプション引数（省略時は従来どおりの動作）。
+  // prepayAfterMonths===0 ならループ開始前に、それ以外はその月数分の返済後に一括で残高から差し引く。
+  function amortize(balance, i, payment, maxMonths, prepayAfterMonths = null, prepayAmount = 0) {
+    let bal = balance;
+    let months = 0, totalInterest = 0, totalPayment = 0;
+    if (prepayAfterMonths === 0) {
+      bal = Math.max(bal - prepayAmount, 0);
+      totalPayment += prepayAmount;
+    }
+    while (bal > 0.5 && months < maxMonths) {
+      const interest = bal * i;
+      let princ = payment - interest;
+      let pay = payment;
+      if (princ >= bal) {
+        princ = bal;
+        pay = bal + interest;
+      }
+      if (princ <= 0) break; // 返済額が利息を賄えない異常値は打ち切り
+      bal -= princ;
+      totalInterest += interest;
+      totalPayment += pay;
+      months++;
+      if (prepayAfterMonths !== null && months === prepayAfterMonths) {
+        bal = Math.max(bal - prepayAmount, 0);
+        totalPayment += prepayAmount;
+      }
+    }
+    return { months, totalInterest, totalPayment, endBalance: Math.max(bal, 0) };
+  }
+
+  // ---- 変動金利：一定間隔（シナリオごとのintervalMonths）ごとの区間に分け、区間ごとに【手順1〜4】を繰り返す ----
+  // 金利は上限（capRatePct）に達したらそれ以上上がらない（頭打ち）
+  function simulateVariable(loanAmount, totalMonths, initialRatePct, incrementPct, intervalMonths, capRatePct) {
+    let balance = loanAmount;      // 【手順1】区間開始時点のローン残高
+    let remaining = totalMonths;   // 【手順1】区間開始時点の残り返済回数（全期間ベース）
+    let segIndex = 0;
+    let totalInterest = 0, totalPayment = 0;
+    const timeline = [];
+    let firstPayment = null;
+
+    while (remaining > 0 && balance > 0.5) {
+      const rawRate = initialRatePct + segIndex * incrementPct;   // 上限を考慮する前の理論上の金利（年%）
+      const rate = Math.min(rawRate, capRatePct);                 // 上限で頭打ちにした実際の金利（年%）
+      const capped = rawRate >= capRatePct - 1e-9;                // この区間が上限で頭打ちになっているか
+      const i = rate / 100 / 12;                                  // その区間の月利
+      const segMonths = Math.min(intervalMonths, remaining);      // 区間の長さ（最終区間は残り回数）
+      // 【手順2】その区間の金利・残高・残り回数から、資本回収係数で毎月返済額を再計算
+      const payment = paymentFormula(balance, i, remaining);
+      if (firstPayment === null) firstPayment = payment;
+      // 【手順3】区間内を1回ずつ積み上げてシミュレーション
+      const seg = amortize(balance, i, payment, segMonths);
+      timeline.push({ startYear: segIndex * (intervalMonths / 12), intervalMonths, rate, payment, months: seg.months, capped });
+      totalInterest += seg.totalInterest; // 各月の利息の合計
+      totalPayment += seg.totalPayment;   // 各月の毎月返済額の合計
+      // 【手順4】区間終わりの残高を次の区間の開始残高として引き継ぐ
+      balance = seg.endBalance;
+      remaining -= seg.months;
+      segIndex++;
+      if (seg.months === 0) break;
+    }
+    const lastPayment = timeline.length ? timeline[timeline.length - 1].payment : 0;
+    // 総返済額＝各月の返済額の合計、利息総額＝各月の利息の合計（＝総返済額－借入額）
+    return { totalInterest, totalPayment, timeline, firstPayment: firstPayment || 0, lastPayment };
+  }
+
+  // ---- 固定期間選択型（◯年固定→変動）----
+  // 第1段階：固定期間中は入力した固定金利で資本回収係数により返済額を計算（nは全期間ベース）
+  // 第2段階：固定期間終了後の残高・残り期間を引き継ぎ、変動金利が固定期間中も裏で上昇し続けていたと仮定して
+  //          固定期間終了時点の水準（上限で頭打ち）から、選択中のシナリオに沿って変動金利に移行する
+  function simulateHybrid(loanAmount, totalMonths, hybridMonths, hybridRatePct, variableInitialRatePct, incrementPct, intervalMonths, capRatePct) {
+    const iHybrid = hybridRatePct / 100 / 12;
+    const paymentStage1 = paymentFormula(loanAmount, iHybrid, totalMonths);
+    const segMonths1 = Math.min(hybridMonths, totalMonths);
+    const stage1 = amortize(loanAmount, iHybrid, paymentStage1, segMonths1);
+
+    const remainingMonths = totalMonths - segMonths1;
+    let stage2Interest = 0, stage2Payment = 0;
+    let paymentAtTransition = paymentStage1, paymentFinal = paymentStage1;
+    let transitionRate = null, transitionCapped = false;
+
+    if (remainingMonths > 0) {
+      // 固定期間終了時点で、変動金利の裏スケジュールが到達しているであろう水準（上限で頭打ち）
+      const transitionSegIndex = Math.floor(hybridMonths / intervalMonths);
+      const rawTransitionRate = variableInitialRatePct + transitionSegIndex * incrementPct;
+      transitionRate = Math.min(rawTransitionRate, capRatePct);
+      transitionCapped = rawTransitionRate >= capRatePct - 1e-9;
+      const stage2 = simulateVariable(stage1.endBalance, remainingMonths, transitionRate, incrementPct, intervalMonths, capRatePct);
+      stage2Interest = stage2.totalInterest;
+      stage2Payment = stage2.totalPayment;
+      paymentAtTransition = stage2.firstPayment;
+      paymentFinal = stage2.lastPayment;
+    }
+
+    return {
+      totalInterest: stage1.totalInterest + stage2Interest,
+      totalPayment: stage1.totalPayment + stage2Payment,
+      paymentInitial: paymentStage1,
+      paymentAtTransition,
+      paymentFinal,
+      transitionRate,
+      transitionCapped
+    };
+  }
+
+  // ---- 変動金利（上昇シナリオ）での繰り上げ返済（期間短縮型）----
+  // scheduleSegments には「変動 vs 固定」タブの金利見直しスケジュール（varResult.timeline）をそのまま渡す。
+  // 各区間の金利・毎月返済額は繰り上げ返済の有無によらず同じスケジュールを使い、
+  // 繰り上げ返済がある場合はその分だけ残高が早く尽きる（＝完済が早まる）ことで効果を表す。
+  function simulateVariablePrepay(loanAmount, scheduleSegments, prepayMonth, prepayAmount) {
+    let balance = loanAmount;
+    let elapsed = 0;
+    let totalInterest = 0, totalPayment = 0;
+    let prepaid = prepayMonth === null;
+
+    for (const seg of scheduleSegments) {
+      if (balance <= 0.5) break;
+      const i = seg.rate / 100 / 12;
+      let prepayAfterMonths = null;
+      if (!prepaid && prepayMonth >= elapsed && prepayMonth < elapsed + seg.months) {
+        prepayAfterMonths = prepayMonth - elapsed;
+        prepaid = true;
+      }
+      const result = amortize(balance, i, seg.payment, seg.months, prepayAfterMonths, prepayAmount);
+      totalInterest += result.totalInterest;
+      totalPayment += result.totalPayment;
+      balance = result.endBalance;
+      elapsed += result.months;
+    }
+    return { totalInterest, totalPayment, monthsElapsed: elapsed };
+  }
+
+  function recalcAll() {
+    readInputsIntoState();
+
+    const { loanAmount, years, variableRate, fixedRate, scenario, variableRateCap,
+      includeHybrid, hybridFixedYears, hybridFixedRate,
+      borrowMonthlyPayment, borrowRate, borrowYears,
+      prepayLoanType, prepayYears, prepayAmount } = state;
+    const totalMonths = years * 12;
+
+    // ================= タブ1：変動 vs 固定 =================
+    const iFixed = fixedRate / 100 / 12;
+    const paymentFixed = paymentFormula(loanAmount, iFixed, totalMonths);
+    const totalPaymentFixed = paymentFixed * totalMonths;
+    const interestFixed = totalPaymentFixed - loanAmount;
+
+    const scenarioInfo = SCENARIOS[scenario];
+    const intervalMonths = scenarioInfo.intervalYears * 12;
+    const varResult = simulateVariable(loanAmount, totalMonths, variableRate, scenarioInfo.increment, intervalMonths, variableRateCap);
+    const diff = varResult.totalPayment - totalPaymentFixed;
+
+    document.getElementById('out_scenarioName').textContent = scenarioInfo.label;
+    document.getElementById('out_fixedPayment').textContent = yen(paymentFixed);
+    document.getElementById('out_fixedInterest').textContent = yen(interestFixed);
+    document.getElementById('out_fixedTotalPayment').textContent = yen(totalPaymentFixed);
+    document.getElementById('out_varPayment').textContent = yen(varResult.firstPayment);
+    document.getElementById('out_varLastPayment').textContent = yen(varResult.lastPayment);
+    document.getElementById('out_varInterest').textContent = yen(varResult.totalInterest);
+    document.getElementById('out_varTotalPayment').textContent = yen(varResult.totalPayment);
+
+    const varFlatRefRow = document.getElementById('varFlatRefRow');
+    if (scenario === 'flat') {
+      varFlatRefRow.style.display = 'none';
+    } else {
+      // 検算用の参考値：金利が上昇せず当初金利のまま据え置きだった場合の総返済額
+      const varFlatRef = simulateVariable(loanAmount, totalMonths, variableRate, 0, intervalMonths, variableRateCap);
+      document.getElementById('out_varFlatRef').textContent = yen(varFlatRef.totalPayment);
+      varFlatRefRow.style.display = '';
+    }
+
+    const diffEl = document.getElementById('out_diff');
+    diffEl.textContent = signedYen(diff);
+    diffEl.classList.toggle('positive', diff < 0);
+    diffEl.classList.toggle('negative', diff > 0);
+    document.getElementById('out_diffNote').textContent =
+      diff > 0 ? '固定金利のほうが総返済額は少なくなります' :
+      diff < 0 ? '変動金利（このシナリオ）のほうが総返済額は少なくなります' :
+      '総返済額はほぼ同じです';
+
+    document.getElementById('varScheduleLabel').textContent =
+      `変動金利の金利見直しスケジュール（${scenarioInfo.intervalYears}年ごと・簡易モデル）`;
+
+    const tbody = document.getElementById('varScheduleBody');
+    tbody.innerHTML = '';
+    varResult.timeline.forEach((seg, idx) => {
+      const tr = document.createElement('tr');
+      const segIntervalYears = seg.intervalMonths / 12;
+      const periodLabel = idx === varResult.timeline.length - 1 && seg.months < seg.intervalMonths
+        ? `${seg.startYear}年目〜完済`
+        : `${seg.startYear}〜${seg.startYear + segIntervalYears}年目`;
+      const rateLabel = pct(seg.rate) + (seg.capped ? '（上限）' : '');
+      tr.innerHTML = `<td>${periodLabel}</td><td class="num">${rateLabel}</td><td class="num">${yen(seg.payment)}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('hybridInputs').style.display = includeHybrid ? '' : 'none';
+    const hybridCard = document.getElementById('hybridCard');
+    if (includeHybrid) {
+      const hybridMonths = hybridFixedYears * 12;
+      const hybrid = simulateHybrid(loanAmount, totalMonths, hybridMonths, hybridFixedRate, variableRate, scenarioInfo.increment, intervalMonths, variableRateCap);
+      document.getElementById('out_hybridYears').textContent = hybridFixedYears;
+      document.getElementById('out_hybridTransitionRate').textContent = hybrid.transitionRate === null
+        ? '－（固定期間中に完済）'
+        : `約${pct(hybrid.transitionRate, 1)}${hybrid.transitionCapped ? '（上限）' : ''}`;
+      document.getElementById('out_hybridPaymentInitial').textContent = yen(hybrid.paymentInitial);
+      document.getElementById('out_hybridPaymentTransition').textContent = yen(hybrid.paymentAtTransition);
+      document.getElementById('out_hybridPaymentFinal').textContent = yen(hybrid.paymentFinal);
+      document.getElementById('out_hybridInterest').textContent = yen(hybrid.totalInterest);
+      document.getElementById('out_hybridTotalPayment').textContent = yen(hybrid.totalPayment);
+      hybridCard.style.display = '';
+    } else {
+      hybridCard.style.display = 'none';
+    }
+
+    // ================= タブ2：FP係数 =================
+    const nFixed = totalMonths;
+    const crfFixedVal = crf(iFixed, nFixed);
+    document.getElementById('out_crfFixedRate').textContent = pct(fixedRate);
+    document.getElementById('out_crfFixed_i').textContent = pct(iFixed * 100, 5);
+    document.getElementById('out_crfFixed_n').textContent = nFixed.toLocaleString('ja-JP') + '回';
+    document.getElementById('out_crfFixed_value').textContent = num6(crfFixedVal);
+    document.getElementById('out_crfFixed_payment').textContent = yen(loanAmount * crfFixedVal);
+
+    const iVar0 = variableRate / 100 / 12;
+    const crfVarVal = crf(iVar0, totalMonths);
+    document.getElementById('out_crfVarRate').textContent = pct(variableRate);
+    document.getElementById('out_crfVar_i').textContent = pct(iVar0 * 100, 5);
+    document.getElementById('out_crfVar_n').textContent = totalMonths.toLocaleString('ja-JP') + '回';
+    document.getElementById('out_crfVar_value').textContent = num6(crfVarVal);
+    document.getElementById('out_crfVar_payment').textContent = yen(loanAmount * crfVarVal);
+
+    const iBorrow = borrowRate / 100 / 12;
+    const nBorrow = borrowYears * 12;
+    const pvifaVal = pvifa(iBorrow, nBorrow);
+    const borrowable = borrowMonthlyPayment * pvifaVal;
+    document.getElementById('out_pvifa_value').textContent = num6(pvifaVal);
+    document.getElementById('out_borrowable').textContent = yen(borrowable);
+
+    // ================= タブ3：繰り上げ返済 =================
+    const tMonths = Math.min(Math.max(prepayYears * 12, 0), Math.max(totalMonths - 1, 0));
+
+    let totalInterestNoPrepay, totalPaymentNoPrepay, monthsNoPrepay;
+    let totalInterestPrepay, totalPaymentPrepay, monthsPrepay;
+
+    if (prepayLoanType === 'variable_scenario') {
+      // 「変動 vs 固定の比較」タブで選択中の金利上昇シナリオ・上限（天井）をそのまま適用
+      const schedule = varResult.timeline;
+      const noPrepay = simulateVariablePrepay(loanAmount, schedule, null, 0);
+      totalInterestNoPrepay = noPrepay.totalInterest;
+      totalPaymentNoPrepay = noPrepay.totalPayment;
+      monthsNoPrepay = noPrepay.monthsElapsed;
+
+      const withPrepay = simulateVariablePrepay(loanAmount, schedule, tMonths, prepayAmount);
+      totalInterestPrepay = withPrepay.totalInterest;
+      totalPaymentPrepay = withPrepay.totalPayment;
+      monthsPrepay = withPrepay.monthsElapsed;
+    } else {
+      const baseRatePct = prepayLoanType === 'fixed' ? fixedRate : variableRate;
+      const iBase = baseRatePct / 100 / 12;
+      const paymentBase = paymentFormula(loanAmount, iBase, totalMonths);
+
+      const seg1 = amortize(loanAmount, iBase, paymentBase, tMonths);
+      const seg2NoPrepay = amortize(seg1.endBalance, iBase, paymentBase, totalMonths - tMonths);
+      totalInterestNoPrepay = seg1.totalInterest + seg2NoPrepay.totalInterest;
+      totalPaymentNoPrepay = seg1.totalPayment + seg2NoPrepay.totalPayment;
+      monthsNoPrepay = tMonths + seg2NoPrepay.months;
+
+      const balanceAfterPrepay = Math.max(seg1.endBalance - prepayAmount, 0);
+      const seg2Prepay = amortize(balanceAfterPrepay, iBase, paymentBase, totalMonths - tMonths);
+      totalInterestPrepay = seg1.totalInterest + seg2Prepay.totalInterest;
+      totalPaymentPrepay = seg1.totalPayment + seg2Prepay.totalPayment + prepayAmount;
+      monthsPrepay = tMonths + seg2Prepay.months;
+    }
+
+    const interestSaved = totalInterestNoPrepay - totalInterestPrepay;
+    const monthsShortened = monthsNoPrepay - monthsPrepay;
+
+    document.getElementById('out_noPrepay_interest').textContent = yen(totalInterestNoPrepay);
+    document.getElementById('out_noPrepay_totalPayment').textContent = yen(totalPaymentNoPrepay);
+    document.getElementById('out_noPrepay_period').textContent = monthsToYM(monthsNoPrepay);
+    document.getElementById('out_prepay_interest').textContent = yen(totalInterestPrepay);
+    document.getElementById('out_prepay_totalPayment').textContent = yen(totalPaymentPrepay);
+    document.getElementById('out_prepay_period').textContent = monthsToYM(monthsPrepay);
+    document.getElementById('out_interestSaved').textContent = yen(interestSaved);
+    document.getElementById('out_monthsShortened').textContent = monthsToYM(monthsShortened);
+
+    // ================= サマリー =================
+    document.getElementById('sum_scenarioName').textContent = scenarioInfo.label;
+    document.getElementById('sum_fixedTotal').textContent = yen(totalPaymentFixed);
+    document.getElementById('sum_varTotal').textContent = yen(varResult.totalPayment);
+    document.getElementById('sum_diff').textContent = signedYen(diff);
+
+    document.getElementById('sum_prepayLoanTypeName').textContent = PREPAY_LOAN_LABEL[prepayLoanType];
+    document.getElementById('sum_noPrepayTotal').textContent = yen(totalPaymentNoPrepay);
+    document.getElementById('sum_prepayTotal').textContent = yen(totalPaymentPrepay);
+    document.getElementById('sum_interestSaved').textContent = yen(interestSaved);
+
+    saveState();
+  }
+
+  Object.keys(el).forEach(key => {
+    el[key].addEventListener('input', recalcAll);
+    el[key].addEventListener('change', recalcAll);
+  });
+
+  // ---- タブ切り替え ----
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  const validTabs = Array.from(tabButtons).map(btn => btn.dataset.tab);
+
+  function setActiveTab(tab) {
+    tabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    tabPanels.forEach(panel => {
+      panel.classList.toggle('hidden', panel.dataset.tab !== tab);
+    });
+    localStorage.setItem(TAB_KEY, tab);
+  }
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+  });
+
+  const savedTab = localStorage.getItem(TAB_KEY);
+  setActiveTab(validTabs.includes(savedTab) ? savedTab : validTabs[0]);
+
+  // ---- 初期描画 ----
+  loadInputsFromState();
+  recalcAll();
+})();
+</script>
+</body>
+</html>
